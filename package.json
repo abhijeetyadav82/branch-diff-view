@@ -1,0 +1,52 @@
+{
+  "name": "branch-diff-view",
+  "displayName": "Branch Diff View",
+  "description": "GitHub-style Files Changed panel for local branch comparison",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "branchDiff.compare",
+        "title": "Branch Diff: Compare with Base…"
+      },
+      {
+        "command": "branchDiff.refresh",
+        "title": "Branch Diff: Refresh"
+      },
+      {
+        "command": "branchDiff.toggleLayout",
+        "title": "Branch Diff: Toggle Layout"
+      }
+    ],
+    "configuration": {
+      "title": "Branch Diff",
+      "properties": {
+        "branchDiff.defaultBase": {
+          "type": "string",
+          "default": "develop",
+          "description": "Default base branch for comparison"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "simple-git": "^3.22.0"
+  }
+}
