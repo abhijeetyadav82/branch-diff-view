@@ -1,0 +1,258 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --rail-width: 260px;
+  --header-height: 36px;
+  --font-code: var(--vscode-editor-font-family, 'Consolas', 'Courier New', monospace);
+  --font-size-code: var(--vscode-editor-font-size, 12px);
+  --font-ui: var(--vscode-font-family, sans-serif);
+  --font-size-ui: var(--vscode-font-size, 13px);
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  height: var(--header-height);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background);
+  flex-shrink: 0;
+}
+
+#toolbar .base-label {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+#toolbar button {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#toolbar button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+#toolbar button.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+#toolbar .spacer { flex: 1; }
+
+/* ── Main layout ─────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Left rail ───────────────────────────────────────────── */
+#rail {
+  width: var(--rail-width);
+  min-width: 160px;
+  max-width: 400px;
+  overflow-y: auto;
+  border-right: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background);
+  flex-shrink: 0;
+}
+
+.tree-folder {
+  padding: 2px 8px;
+  font-weight: 600;
+  color: var(--vscode-sideBarSectionHeader-foreground);
+  background: var(--vscode-sideBarSectionHeader-background);
+  user-select: none;
+}
+
+.tree-file {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tree-file:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.tree-file.viewed {
+  opacity: 0.45;
+}
+
+.tree-file .filename {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.tree-file .stats {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.tree-file .stats .adds { color: var(--vscode-gitDecoration-addedResourceForeground, #4ec994); }
+.tree-file .stats .dels { color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c); }
+
+.tree-file input[type="checkbox"] {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ── Diff pane ───────────────────────────────────────────── */
+#pane {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 0 0 32px;
+}
+
+/* ── File block ──────────────────────────────────────────── */
+.file-block {
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.file-block.viewed > .diff-body {
+  display: none;
+}
+
+.file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--vscode-sideBarSectionHeader-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+}
+
+.file-header .file-path {
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-header .file-stats .adds { color: var(--vscode-gitDecoration-addedResourceForeground, #4ec994); }
+.file-header .file-stats .dels { color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c); }
+.file-header .file-stats { font-size: 12px; }
+
+.file-header button.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+  padding: 0 4px;
+  font-size: 11px;
+}
+
+.file-header button.copy-btn:hover { opacity: 1; }
+
+.file-block.viewed .file-header { opacity: 0.5; }
+
+/* ── Empty / binary stubs ────────────────────────────────── */
+.empty-state, .binary-stub, .large-diff-stub {
+  padding: 24px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  font-size: 13px;
+}
+
+/* ── Diff table (shared) ─────────────────────────────────── */
+.diff-body {
+  overflow-x: auto;
+}
+
+table.diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-code);
+  font-size: var(--font-size-code);
+  line-height: 1.5;
+  tab-size: 4;
+}
+
+table.diff-table td {
+  padding: 0 4px;
+  white-space: pre;
+}
+
+/* line number cells */
+.ln {
+  min-width: 40px;
+  text-align: right;
+  color: var(--vscode-editorLineNumber-foreground);
+  user-select: none;
+  padding-right: 8px;
+  border-right: 1px solid var(--vscode-panel-border);
+}
+
+/* hunk separator */
+tr.hunk-sep td {
+  background: var(--vscode-diffEditor-unchangedRegionBackground,
+               color-mix(in srgb, var(--vscode-editor-background) 85%, var(--vscode-focusBorder)));
+  color: var(--vscode-descriptionForeground);
+  padding: 2px 12px;
+  font-size: 11px;
+  user-select: none;
+}
+
+/* Unified rows */
+tr.add > td { background: var(--vscode-diffEditor-insertedLineBackground, rgba(0,255,0,0.08)); }
+tr.del > td { background: var(--vscode-diffEditor-removedLineBackground, rgba(255,0,0,0.08)); }
+
+tr.add > td.code::before { content: '+'; color: var(--vscode-gitDecoration-addedResourceForeground, #4ec994); }
+tr.del > td.code::before { content: '-'; color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c); }
+tr.ctx > td.code::before { content: ' '; }
+
+/* Split: two halves */
+.split-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.split-table table {
+  width: 100%;
+  overflow: hidden;
+}
+
+.split-table table:first-child {
+  border-right: 1px solid var(--vscode-panel-border);
+}

@@ -28,15 +28,26 @@ async function build() {
     format: 'iife',
   });
 
+  // Webview CSS bundle
+  const cssCtx = await esbuild.context({
+    entryPoints: ['webview/styles.css'],
+    outfile: 'dist/webview.css',
+    bundle: true,
+    minify: false,
+  });
+
   if (watch) {
     await extCtx.watch();
     await webCtx.watch();
+    await cssCtx.watch();
     console.log('Watching for changes…');
   } else {
     await extCtx.rebuild();
     await webCtx.rebuild();
+    await cssCtx.rebuild();
     await extCtx.dispose();
     await webCtx.dispose();
+    await cssCtx.dispose();
     console.log('Build complete.');
   }
 }
