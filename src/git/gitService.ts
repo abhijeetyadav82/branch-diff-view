@@ -42,24 +42,80 @@ export class GitService {
   }
 
   async buildFileDiffs(base: string, head: string = 'HEAD'): Promise<FileDiff[]> {
-    const files = await this.listChangedFiles(base, head);
-    const diffs: FileDiff[] = [];
-    for (const f of files) {
-      const lookupPath = f.path;
-      const raw = await this.getFileDiff(base, head, lookupPath);
+    const range = `${base}...${head}`;
+
+    // Fan out the three git calls in parallel. This collapses N+2 sequential
+    // spawns (one per file + name-status + numstat) into 3 total subprocesses.
+    const [nameStatus, numStat, fullDiff] = await Promise.all([
+      this.git.raw(['diff', '--name-status', range]),
+      this.git.raw(['diff', '--numstat', range]),
+      this.git.raw(['diff', '--unified=3', range]),
+    ]);
+
+    const changes = parseNameStatus(nameStatus);
+    applyNumStat(changes, numStat);
+
+    // Split the single unified-diff blob into per-file segments and index by path.
+    const segmentByPath = splitDiffByFile(fullDiff);
+
+    return changes.map((f) => {
+      const raw = segmentByPath.get(f.path) ?? '';
       const parsed = parseDiff(raw);
-      diffs.push({
+      return {
         path: f.path,
         oldPath: f.oldPath,
         status: f.status,
         additions: f.additions,
         deletions: f.deletions,
-        binary: parsed.binary,
+        binary: parsed.binary || /^Binary files /m.test(raw),
         hunks: parsed.hunks,
-      });
-    }
-    return diffs;
+      };
+    });
   }
+}
+
+/**
+ * Split a multi-file `git diff` blob into per-file segments keyed by the
+ * post-image path (b/<path>). Each segment runs from a `diff --git` header
+ * to the next one (or EOF).
+ */
+function splitDiffByFile(raw: string): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!raw) return out;
+
+  const lines = raw.split('\n');
+  let currentPath: string | null = null;
+  let buf: string[] = [];
+
+  const flush = () => {
+    if (currentPath !== null) {
+      out.set(currentPath, buf.join('\n'));
+    }
+    buf = [];
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('diff --git ')) {
+      flush();
+      currentPath = extractNewPath(line);
+    }
+    buf.push(line);
+  }
+  flush();
+
+  return out;
+}
+
+function extractNewPath(diffGitLine: string): string {
+  // Forms we need to handle:
+  //   diff --git a/path b/path
+  //   diff --git "a/path with space" "b/path with space"
+  const quoted = /\sb\/("(?:\\.|[^"\\])*")\s*$/.exec(diffGitLine);
+  if (quoted) {
+    return JSON.parse(quoted[1]);
+  }
+  const unquoted = /\sb\/(.+)$/.exec(diffGitLine);
+  return unquoted ? unquoted[1].trim() : '';
 }
 
 function parseNameStatus(raw: string): FileChange[] {
