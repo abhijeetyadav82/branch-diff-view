@@ -8,6 +8,10 @@ export class DiffPanel {
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
 
+  private _ready = false;
+  private _pendingMessages: ExtToWeb[] = [];
+  private _onRefresh?: () => void;
+
   private constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _viewedStore: ViewedStore,
@@ -48,21 +52,41 @@ export class DiffPanel {
     return DiffPanel._instance;
   }
 
+  /** Register a callback invoked when the user hits Refresh in the webview. */
+  onRefresh(cb: () => void): void {
+    this._onRefresh = cb;
+  }
+
   postMessage(msg: ExtToWeb): void {
+    if (!this._ready) {
+      this._pendingMessages.push(msg);
+      return;
+    }
     this._panel.webview.postMessage(msg);
+  }
+
+  private _flush(): void {
+    for (const m of this._pendingMessages) {
+      this._panel.webview.postMessage(m);
+    }
+    this._pendingMessages = [];
   }
 
   private _handleMessage(msg: WebToExt): void {
     switch (msg.type) {
+      case 'ready':
+        this._ready = true;
+        this._flush();
+        break;
+      case 'refresh':
+        this._onRefresh?.();
+        break;
       case 'setViewed':
         this._viewedStore.set(msg.path, msg.value);
-        this.postMessage({
+        this._panel.webview.postMessage({
           type: 'viewedUpdate',
           viewed: this._viewedStore.getAll(),
         });
-        break;
-      case 'ready':
-        // webview signals it loaded — nothing to do yet
         break;
     }
   }

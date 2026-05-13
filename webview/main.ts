@@ -31,7 +31,7 @@ const btnExpandAll = toolbar.querySelector<HTMLButtonElement>('#btn-expand')!;
 const btnCollapseAll = toolbar.querySelector<HTMLButtonElement>('#btn-collapse')!;
 
 btnRefresh.addEventListener('click', () =>
-  vscode.postMessage({ type: 'ready' }),
+  vscode.postMessage({ type: 'refresh' }),
 );
 
 btnSplit.addEventListener('click', () => setLayout('split'));

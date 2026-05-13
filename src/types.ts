@@ -38,4 +38,5 @@ export type ExtToWeb =
 
 export type WebToExt =
   | { type: 'setViewed'; path: string; value: boolean }
+  | { type: 'refresh' }
   | { type: 'ready' };

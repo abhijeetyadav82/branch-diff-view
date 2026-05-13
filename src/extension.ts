@@ -78,6 +78,7 @@ function sendToPanel(
   files: FileDiff[],
 ): void {
   _panel = DiffPanel.createOrShow(ctx.extensionUri, _viewedStore!);
+  _panel.onRefresh(() => refreshCommand());
   _panel.postMessage({
     type: 'init',
     files,
