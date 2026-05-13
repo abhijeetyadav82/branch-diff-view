@@ -114,14 +114,20 @@ function buildFileBlockShell(file: FileDiff): HTMLElement {
   const header = document.createElement('div');
   header.className = 'file-header';
 
+  const badge = document.createElement('span');
+  badge.className = `status-badge status-${file.status[0]}`;
+  badge.textContent = file.status[0];
+
   const pathSpan = document.createElement('span');
   pathSpan.className = 'file-path';
   pathSpan.textContent = file.oldPath ? `${file.oldPath} → ${file.path}` : file.path;
 
   const stats = document.createElement('span');
   stats.className = 'file-stats';
-  stats.innerHTML =
-    `<span class="adds">+${file.additions}</span> <span class="dels">-${file.deletions}</span>`;
+  if (!file.binary) {
+    stats.innerHTML =
+      `<span class="adds">+${file.additions}</span> <span class="dels">-${file.deletions}</span>`;
+  }
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'copy-btn';
@@ -141,6 +147,7 @@ function buildFileBlockShell(file: FileDiff): HTMLElement {
   });
   viewedCb.addEventListener('click', (e) => e.stopPropagation());
 
+  header.appendChild(badge);
   header.appendChild(pathSpan);
   header.appendChild(stats);
   header.appendChild(copyBtn);
