@@ -83,12 +83,29 @@ function renderAll(): void {
 
   renderTree(_files, _viewed, onCheck, scrollToFile);
 
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const block = entry.target as HTMLElement;
+        const path = block.dataset.path!;
+        const file = _files.find((f) => f.path === path);
+        if (!file) continue;
+        observer.unobserve(block);
+        block.appendChild(buildDiffBody(file));
+      }
+    },
+    { root: pane, rootMargin: '200% 0px' },
+  );
+
   for (const file of _files) {
-    pane.appendChild(buildFileBlock(file));
+    const block = buildFileBlockShell(file);
+    pane.appendChild(block);
+    observer.observe(block);
   }
 }
 
-function buildFileBlock(file: FileDiff): HTMLElement {
+function buildFileBlockShell(file: FileDiff): HTMLElement {
   const block = document.createElement('div');
   block.className = 'file-block' + (_viewed[file.path] ? ' viewed' : '');
   block.dataset.path = file.path;
@@ -131,15 +148,11 @@ function buildFileBlock(file: FileDiff): HTMLElement {
 
   // Toggle collapse on header click
   header.addEventListener('click', () => {
-    const body = block.querySelector<HTMLElement>('.diff-body')!;
-    body.style.display = body.style.display === 'none' ? '' : 'none';
+    const body = block.querySelector<HTMLElement>('.diff-body');
+    if (body) body.style.display = body.style.display === 'none' ? '' : 'none';
   });
 
   block.appendChild(header);
-
-  // ── Body ──
-  const body = buildDiffBody(file);
-  block.appendChild(body);
 
   return block;
 }
@@ -177,15 +190,14 @@ function setLayout(layout: 'split' | 'unified'): void {
   btnSplit.classList.toggle('active', layout === 'split');
   btnUnified.classList.toggle('active', layout === 'unified');
 
-  // Re-render only the diff bodies (keeps scroll position in pane)
+  // Re-render only already-loaded diff bodies
   document.querySelectorAll<HTMLElement>('.file-block').forEach((block) => {
     const path = block.dataset.path!;
     const file = _files.find((f) => f.path === path);
     if (!file) return;
     const existing = block.querySelector<HTMLElement>('.diff-body');
-    const newBody = buildDiffBody(file);
-    if (existing) existing.replaceWith(newBody);
-    else block.appendChild(newBody);
+    if (!existing) return; // not yet lazy-loaded
+    existing.replaceWith(buildDiffBody(file));
   });
 }
 
