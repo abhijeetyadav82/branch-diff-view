@@ -10,7 +10,7 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE/extension/dist"
 
 # Copy required files
-cp package.json README.md "$STAGE/extension/"
+cp package.json README.md CHANGELOG.md LICENSE icon.png "$STAGE/extension/"
 cp dist/extension.js dist/webview.js dist/webview.css "$STAGE/extension/dist/"
 
 # [Content_Types].xml
@@ -39,6 +39,7 @@ cat > "$STAGE/extension.vsixmanifest" <<EOF
     <Tags>git,diff,review</Tags>
     <Categories>Other</Categories>
     <GalleryFlags>Public</GalleryFlags>
+    <Icon>extension/icon.png</Icon>
     <Badges></Badges>
     <Properties>
       <Property Id="Microsoft.VisualStudio.Code.Engine" Value="^1.85.0" />
@@ -50,6 +51,7 @@ cat > "$STAGE/extension.vsixmanifest" <<EOF
   <Dependencies />
   <Assets>
     <Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true" />
+    <Asset Type="Microsoft.VisualStudio.Services.Icons.Default" Path="extension/icon.png" Addressable="true" />
   </Assets>
 </PackageManifest>
 EOF

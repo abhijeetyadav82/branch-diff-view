@@ -49,10 +49,6 @@ function appendUnifiedRow(table: HTMLTableElement, line: DiffLine): void {
   const tr = table.insertRow();
   tr.className = line.type === 'add' ? 'add' : line.type === 'del' ? 'del' : 'ctx';
 
-  const oldLn = table.insertRow().deleteCell(0) || document.createElement('td'); // trick: reuse cells
-  // Simpler: just create tds manually
-  tr.innerHTML = ''; // clear the auto-created empty row
-
   const td1 = document.createElement('td');
   td1.className = 'ln old-ln';
   td1.textContent = line.oldNo !== undefined ? String(line.oldNo) : '';

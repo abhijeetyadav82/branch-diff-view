@@ -34,7 +34,8 @@ export interface FileDiff {
 // Messages between extension and webview
 export type ExtToWeb =
   | { type: 'init'; files: FileDiff[]; baseRef: string; viewed: Record<string, boolean> }
-  | { type: 'viewedUpdate'; viewed: Record<string, boolean> };
+  | { type: 'viewedUpdate'; viewed: Record<string, boolean> }
+  | { type: 'toggleLayout' };
 
 export type WebToExt =
   | { type: 'setViewed'; path: string; value: boolean }

@@ -10,35 +10,34 @@ export class GitService {
   }
 
   async listBranches(): Promise<string[]> {
-    const result = await this.git.branchLocal();
-    return result.all;
+    // for-each-ref with an explicit format sidesteps simple-git's column
+    // parser (which misreads `branch -r` output that lacks -v columns) and,
+    // by querying refs/heads and refs/remotes separately, classifies local
+    // vs remote reliably even when branch names contain slashes.
+    const [localRaw, remoteRaw] = await Promise.all([
+      this.git.raw(['for-each-ref', '--format=%(refname:short)', 'refs/heads']),
+      this.git.raw(['for-each-ref', '--format=%(refname:short)', 'refs/remotes']),
+    ]);
+
+    const local = localRaw.split('\n').map(s => s.trim()).filter(Boolean);
+    const localSet = new Set(local);
+
+    // Append remote-tracking branches that have no local counterpart.
+    // Drops the "origin/HEAD" symbolic pointer; strips the remote prefix
+    // (first path segment) to compare against local names.
+    const remoteOnly = remoteRaw
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .filter(name => !name.endsWith('/HEAD'))
+      .filter(name => !localSet.has(name.slice(name.indexOf('/') + 1)));
+
+    return [...local, ...remoteOnly];
   }
 
   async currentBranch(): Promise<string> {
     const result = await this.git.branchLocal();
     return result.current;
-  }
-
-  async listChangedFiles(base: string, head: string = 'HEAD'): Promise<FileChange[]> {
-    const range = `${base}...${head}`;
-
-    // --name-status gives us path + status (with rename old→new)
-    const nameStatus = await this.git.raw(['diff', '--name-status', range]);
-    // --numstat gives us additions/deletions (binary shows as -)
-    const numStat = await this.git.raw(['diff', '--numstat', range]);
-
-    const changes = parseNameStatus(nameStatus);
-    applyNumStat(changes, numStat);
-    return changes;
-  }
-
-  async getFileDiff(base: string, head: string, filePath: string): Promise<string> {
-    const range = `${base}...${head}`;
-    try {
-      return await this.git.raw(['diff', '--unified=3', range, '--', filePath]);
-    } catch {
-      return '';
-    }
   }
 
   async buildFileDiffs(base: string, head: string = 'HEAD'): Promise<FileDiff[]> {

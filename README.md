@@ -11,6 +11,9 @@ A VS Code extension that brings GitHub's **Files Changed** panel into your edito
 - **Lazy rendering** — file diff bodies are rendered only when scrolled into view.
 - **Large-diff guard** — files with >5 000 diff lines show a placeholder with a "Load anyway" button.
 - **Theme-aware** — uses `--vscode-*` CSS variables; works with any light or dark theme.
+- **Filter files** — type in the toolbar search to narrow both the tree and the diff pane.
+- **Summary chip** — total file count and aggregate `+adds / -dels` always visible.
+- **Active-file tracking** — the tree highlights the file you're currently scrolled to.
 
 ## Usage
 
@@ -26,9 +29,11 @@ The panel opens with the file tree on the left and all diff blocks stacked on th
 | Action | How |
 |---|---|
 | Collapse / expand a file | Click the file header |
-| Collapse all | Toolbar **⊟ All** button |
+| Collapse / Expand all | Toolbar **Collapse** / **Expand** buttons |
+| Focus the filter input | Press `/` |
+| Clear the filter | Press `Esc` while focused |
 | Mark file viewed | Tick the checkbox in the tree or file header |
-| Refresh after new commits | Toolbar **↻ Refresh** button |
+| Refresh after new commits | Toolbar **↻** button |
 
 ## Configuration
 
@@ -58,3 +63,11 @@ Press `F5` in VS Code to launch an **Extension Development Host** with the exten
 - Local git only — no GitHub API, no inline comments, no review submission.
 - Single-repo workspaces only (picks the first repo found).
 - Binary files show a stub; no content preview.
+
+## License
+
+[MIT](./LICENSE) © Abhijeet Yadav
+
+## Contributing
+
+Bug reports and PRs welcome at [github.com/abhijeetyadav82/branch-diff-view](https://github.com/abhijeetyadav82/branch-diff-view).

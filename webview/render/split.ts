@@ -1,4 +1,4 @@
-import type { FileDiff, Hunk, DiffLine } from '../../src/types';
+import type { FileDiff, DiffLine } from '../../src/types';
 
 export function renderSplit(file: FileDiff): HTMLElement {
   const wrap = document.createElement('div');
@@ -20,124 +20,99 @@ export function renderSplit(file: FileDiff): HTMLElement {
     return wrap;
   }
 
-  const grid = document.createElement('div');
-  grid.className = 'split-table';
-
-  const leftTable = buildSplitTable();
-  const rightTable = buildSplitTable();
+  // Single 4-column table: old-ln | old-code | new-ln | new-code
+  // This is the only correct way to keep rows height-aligned across both halves.
+  const table = document.createElement('table');
+  table.className = 'diff-table split-4col';
 
   for (const hunk of file.hunks) {
-    appendSplitHunkSep(leftTable, rightTable, hunk);
-    const { leftRows, rightRows } = pairHunkLines(hunk.lines);
-    for (let i = 0; i < Math.max(leftRows.length, rightRows.length); i++) {
-      appendSplitRow(leftTable, leftRows[i]);
-      appendSplitRow(rightTable, rightRows[i]);
+    const sep = table.insertRow();
+    sep.className = 'hunk-sep';
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.textContent = `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`;
+    sep.appendChild(td);
+
+    for (const pair of pairLines(hunk.lines)) {
+      appendRow(table, pair);
     }
   }
 
-  grid.appendChild(leftTable);
-  grid.appendChild(rightTable);
-  wrap.appendChild(grid);
+  wrap.appendChild(table);
   return wrap;
 }
 
-function buildSplitTable(): HTMLTableElement {
-  const t = document.createElement('table');
-  t.className = 'diff-table split-half';
-  return t;
+interface Pair {
+  kind: 'ctx' | 'del' | 'add' | 'chg';
+  oldLine?: DiffLine;
+  newLine?: DiffLine;
 }
 
-function appendSplitHunkSep(
-  left: HTMLTableElement,
-  right: HTMLTableElement,
-  hunk: Hunk,
-): void {
-  const makeRow = (label: string) => {
-    const tr = document.createElement('tr');
-    tr.className = 'hunk-sep';
-    const td = document.createElement('td');
-    td.colSpan = 2;
-    td.textContent = label;
-    tr.appendChild(td);
-    return tr;
-  };
-  left.appendChild(makeRow(`@@ -${hunk.oldStart},${hunk.oldLines} @@`));
-  right.appendChild(makeRow(`@@ +${hunk.newStart},${hunk.newLines} @@`));
-}
-
-interface SplitLine {
-  type: 'add' | 'del' | 'context' | 'empty';
-  ln?: number;
-  text?: string;
-}
-
-function pairHunkLines(lines: DiffLine[]): { leftRows: SplitLine[]; rightRows: SplitLine[] } {
-  const leftRows: SplitLine[] = [];
-  const rightRows: SplitLine[] = [];
-
+function pairLines(lines: DiffLine[]): Pair[] {
+  const out: Pair[] = [];
   let i = 0;
+
   while (i < lines.length) {
     const line = lines[i];
     if (line.type === 'no-newline') { i++; continue; }
 
     if (line.type === 'context') {
-      leftRows.push({ type: 'context', ln: line.oldNo, text: line.text });
-      rightRows.push({ type: 'context', ln: line.newNo, text: line.text });
+      out.push({ kind: 'ctx', oldLine: line, newLine: line });
       i++;
       continue;
     }
 
-    // Collect a block of del/add lines and pair them
     const dels: DiffLine[] = [];
     const adds: DiffLine[] = [];
-    while (i < lines.length && lines[i].type === 'del') { dels.push(lines[i++]); }
-    while (i < lines.length && lines[i].type === 'add') { adds.push(lines[i++]); }
+    while (i < lines.length && lines[i].type === 'del') dels.push(lines[i++]);
+    while (i < lines.length && lines[i].type === 'add') adds.push(lines[i++]);
 
-    const maxLen = Math.max(dels.length, adds.length);
-    for (let j = 0; j < maxLen; j++) {
-      leftRows.push(
-        j < dels.length
-          ? { type: 'del', ln: dels[j].oldNo, text: dels[j].text }
-          : { type: 'empty' },
-      );
-      rightRows.push(
-        j < adds.length
-          ? { type: 'add', ln: adds[j].newNo, text: adds[j].text }
-          : { type: 'empty' },
-      );
+    const len = Math.max(dels.length, adds.length);
+    for (let j = 0; j < len; j++) {
+      const d = dels[j];
+      const a = adds[j];
+      if (d && a)       out.push({ kind: 'chg', oldLine: d, newLine: a });
+      else if (d)       out.push({ kind: 'del', oldLine: d });
+      else              out.push({ kind: 'add', newLine: a });
     }
   }
-
-  return { leftRows, rightRows };
+  return out;
 }
 
-function appendSplitRow(table: HTMLTableElement, line: SplitLine | undefined): void {
+function appendRow(table: HTMLTableElement, p: Pair): void {
   const tr = document.createElement('tr');
-  const l = line ?? { type: 'empty' as const };
+  tr.className = `sp-${p.kind}`;
 
-  if (l.type === 'empty') {
-    tr.className = 'empty-row';
-    const td1 = document.createElement('td');
-    td1.className = 'ln';
-    const td2 = document.createElement('td');
-    td2.className = 'code';
-    tr.appendChild(td1);
-    tr.appendChild(td2);
-    table.appendChild(tr);
-    return;
+  // Old side
+  const oLn = document.createElement('td');
+  oLn.className = 'ln sp-old-ln';
+  const oCode = document.createElement('td');
+  oCode.className = 'code sp-old-code';
+
+  if (p.oldLine) {
+    oLn.textContent = p.oldLine.oldNo != null ? String(p.oldLine.oldNo) : '';
+    oCode.textContent = p.oldLine.text;
   }
 
-  tr.className = l.type;
+  // Divider
+  const div = document.createElement('td');
+  div.className = 'sp-div';
 
-  const lnTd = document.createElement('td');
-  lnTd.className = 'ln';
-  lnTd.textContent = l.ln !== undefined ? String(l.ln) : '';
+  // New side
+  const nLn = document.createElement('td');
+  nLn.className = 'ln sp-new-ln';
+  const nCode = document.createElement('td');
+  nCode.className = 'code sp-new-code';
 
-  const codeTd = document.createElement('td');
-  codeTd.className = 'code';
-  codeTd.textContent = l.text ?? '';
+  if (p.newLine) {
+    nLn.textContent = p.newLine.newNo != null ? String(p.newLine.newNo) : '';
+    nCode.textContent = p.newLine.text;
+  }
 
-  tr.appendChild(lnTd);
-  tr.appendChild(codeTd);
+  tr.appendChild(oLn);
+  tr.appendChild(oCode);
+  tr.appendChild(div);
+  tr.appendChild(nLn);
+  tr.appendChild(nCode);
   table.appendChild(tr);
 }

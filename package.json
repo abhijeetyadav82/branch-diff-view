@@ -1,12 +1,28 @@
 {
   "name": "branch-diff-view",
   "displayName": "Branch Diff View",
-  "description": "GitHub-style Files Changed panel for local branch comparison",
+  "description": "GitHub-style Files Changed panel for local branch comparison — review every file in your branch at a glance.",
   "version": "0.1.0",
+  "publisher": "abhijeet",
+  "author": {
+    "name": "Abhijeet Yadav",
+    "email": "abhijeet@switchon.io"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abhijeetyadav82/branch-diff-view.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abhijeetyadav82/branch-diff-view/issues"
+  },
+  "homepage": "https://github.com/abhijeetyadav82/branch-diff-view#readme",
+  "keywords": ["git", "diff", "branch", "review", "compare", "pull request", "files changed"],
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": ["SCM Providers", "Other"],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
