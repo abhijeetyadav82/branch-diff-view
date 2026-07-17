@@ -7,3 +7,6 @@ tsconfig.json
 plan.md
 .gitignore
 **/*.map
+graphify-out/**
+build-vsix.sh
+PUBLISHING.md
